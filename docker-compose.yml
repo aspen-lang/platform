@@ -1,0 +1,7 @@
+version: "3.7"
+services:
+  api:
+    image: docker.pkg.github.com/aspen-lang/platform/api:dev
+    build: ./api
+    ports:
+      - 8571:80
