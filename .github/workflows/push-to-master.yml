@@ -22,11 +22,12 @@ jobs:
       - name: Authenticate Docker
         run: gcloud auth configure-docker
 
-      - uses: allenevans/set-env@v1.0.0
+      - name: Set Docker Tag Environment Variables
+        uses: allenevans/set-env@v1.0.0
         with:
           API_TAG: ${{ hashFiles('api/**') }}
 
-      - run: make pull
-      - run: make push
+      - name: Build and Deploy
+        run: make pull push
 
 
