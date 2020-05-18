@@ -5,8 +5,9 @@ authors = ["Emil Broman <emil@emilbroman.me>"]
 edition = "2018"
 
 [dependencies]
-juniper = "0.14.2"
+juniper = { version = "0.14.2", features = ["default"] }
 juniper_rocket = "0.5.2"
 rocket = "0.4"
 log = "0.4.8"
-uuid = { version = "0.8", features = ["v4"] }
+uuid = { version = "^0.7", features = ["v4", "serde"] }
+sha2 = "0.8"

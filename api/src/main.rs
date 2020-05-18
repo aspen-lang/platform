@@ -42,6 +42,9 @@ impl<'a, 'r> FromRequest<'a, 'r> for User {
 
                         Outcome::Success(User {
                             id,
+                            email: "unknown@example.com".into(),
+                            username: "username".into(),
+                            password: vec![],
                         })
                     }
                 }
@@ -68,6 +71,10 @@ fn graphql(
         let mut cookie = Cookie::new(AUTH_COOKIE, user.as_ref().unwrap().id.to_string());
         cookie.make_permanent();
         cookies.add_private(cookie)
+    }
+
+    if context.did_sign_out() {
+        cookies.remove_private(Cookie::named(AUTH_COOKIE));
     }
 
     response
