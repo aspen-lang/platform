@@ -7,7 +7,7 @@ use tokio::sync::Mutex;
 fn hash_password(password: &str) -> Vec<u8> {
     let mut hasher = Sha512::new();
     hasher.input(password);
-    hasher.input(env::var("ROCKET_SECRET_KEY").unwrap_or("<<dev>>".into()));
+    hasher.input(env::var("PASSWORD_SALT").unwrap_or("<<dev>>".into()));
     let hash = hasher.result();
     hash.to_vec()
 }
