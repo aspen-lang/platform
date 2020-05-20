@@ -1,26 +1,25 @@
-use uuid::Uuid;
 use crate::Context;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct User {
     pub id: Uuid,
     pub email: String,
     pub username: String,
-    pub password: Vec<u8>,
 }
 
-#[juniper::object(Context = Context)]
+#[juniper::graphql_object(Context = Context)]
 impl User {
-    fn id(&self, context: &Context) -> &Uuid {
+    fn id(&self, _context: &Context) -> &Uuid {
         &self.id
     }
 
-    fn username(&self, context: &Context) -> &str {
+    fn username(&self, _context: &Context) -> &str {
         self.username.as_ref()
     }
 
-    fn email(&self, context: &Context) -> Option<&str> {
-        let logged_in_user = context.user();
+    async fn email(&self, context: &Context) -> Option<&str> {
+        let logged_in_user = context.user().lock().await;
         let logged_in_user = logged_in_user.as_ref()?;
 
         if logged_in_user.id != self.id {

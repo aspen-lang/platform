@@ -1,11 +1,11 @@
-use crate::Context;
 use crate::user::User;
+use crate::Context;
 
 pub struct Query;
 
-#[juniper::object(Context = Context)]
+#[juniper::graphql_object(Context = Context)]
 impl Query {
-    fn me(context: &Context) -> Option<User> {
-        context.user().clone()
+    async fn me(context: &Context) -> Option<User> {
+        context.user().lock().await.clone()
     }
 }

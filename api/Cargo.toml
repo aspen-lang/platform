@@ -5,9 +5,14 @@ authors = ["Emil Broman <emil@emilbroman.me>"]
 edition = "2018"
 
 [dependencies]
-juniper = { version = "0.14.2", features = ["default"] }
-juniper_rocket = "0.5.2"
-rocket = "0.4"
+juniper = { git = "https://github.com/graphql-rust/juniper.git" }
+juniper_rocket_async = { git = "https://github.com/graphql-rust/juniper.git" }
+rocket = { git = "https://github.com/SergioBenitez/Rocket", branch = "async" }
 log = "0.4.8"
-uuid = { version = "^0.7", features = ["v4", "serde"] }
+uuid = { version = "^0.8", features = ["v4", "serde"] }
 sha2 = "0.8"
+bb8-postgres = "0.4.0"
+tokio-postgres = { version = "0.5.4", features = ["with-uuid-0_8"] }
+native-tls = "0.2.4"
+futures = "0.3.5"
+tokio = { version="0.2", features = ["rt-threaded", "sync", "macros"] }
