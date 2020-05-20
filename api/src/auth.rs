@@ -48,8 +48,16 @@ impl UserValidationError {
 impl fmt::Display for UserValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            UserValidationError::UsernameTooShort => write!(f, "Username must be at least {} characters long", USERNAME_LENGTH_LIMIT),
-            UserValidationError::PasswordTooShort => write!(f, "Password must be at least {} characters long", PASSWORD_LENGTH_LIMIT),
+            UserValidationError::UsernameTooShort => write!(
+                f,
+                "Username must be at least {} characters long",
+                USERNAME_LENGTH_LIMIT
+            ),
+            UserValidationError::PasswordTooShort => write!(
+                f,
+                "Password must be at least {} characters long",
+                PASSWORD_LENGTH_LIMIT
+            ),
             UserValidationError::InvalidEmail => write!(f, "Invalid email address"),
         }
     }
@@ -168,7 +176,7 @@ impl SharedContext {
                     Some(hash_password(&change.current)),
                     Some(hash_password(&change.new)),
                 )
-            },
+            }
         };
 
         if let Some(email) = &new_email {

@@ -1,6 +1,7 @@
 #![feature(decl_macro, proc_macro_hygiene, arbitrary_self_types)]
 
-#[macro_use] extern crate async_trait;
+#[macro_use]
+extern crate async_trait;
 
 mod user;
 use self::user::*;
@@ -19,12 +20,15 @@ mod auth;
 use juniper::EmptySubscription;
 use juniper_rocket_async as juniper_rocket;
 
-use rocket::{http::{Cookie, Cookies, Header}, response::content, State, Request, Response};
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::http::Status;
+use rocket::{
+    http::{Cookie, Cookies, Header},
+    response::content,
+    Request, Response, State,
+};
 use std::sync::Arc;
 use uuid::Uuid;
-use rocket::request::FromRequest;
-use rocket::request::Outcome;
-use rocket::http::Status;
 
 type Schema = juniper::RootNode<'static, Query, Mutation, EmptySubscription<Context>>;
 
@@ -35,39 +39,36 @@ fn playground() -> content::Html<String> {
 
 const AUTH_COOKIE: &str = "ASPEN_AUTH";
 
-struct Origin(pub String);
+struct Cors;
 
 #[async_trait]
-impl<'a, 'r> FromRequest<'a, 'r> for Origin {
-    type Error = ();
+impl Fairing for Cors {
+    fn info(&self) -> Info {
+        Info {
+            name: "Cors",
+            kind: Kind::Response,
+        }
+    }
 
-    async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
-        match request.headers().get_one("Origin") {
-            None => Outcome::Forward(()),
-            Some(origin) => Outcome::Success(Origin(origin.into())),
+    async fn on_response<'a>(&'a self, req: &'a Request<'_>, res: &'a mut Response<'_>) {
+        match req.headers().get_one("Origin") {
+            None => {}
+            Some(origin) => {
+                res.adjoin_header(Header::new(
+                    "Access-Control-Allow-Origin",
+                    origin.to_string(),
+                ));
+                res.adjoin_header(Header::new("Access-Control-Allow-Methods", "POST, GET"));
+                res.adjoin_header(Header::new("Access-Control-Allow-Credentials", "true"));
+                res.adjoin_header(Header::new("Access-Control-Max-Age", "3600"));
+            }
         }
     }
 }
 
 #[rocket::options("/")]
-async fn preflight<'r>(origin: Option<Origin>) -> Response<'r> {
-    let mut response = Response::build();
-
-    response.status(Status::NoContent);
-
-    match origin {
-        None => {}
-        Some(Origin(origin)) => {
-            response
-                .header(Header::new("Access-Control-Allow-Origin", origin))
-                .header(Header::new("Access-Control-Allow-Methods", "POST, GET"))
-                .header(Header::new("Access-Control-Allow-Credentials", "true"))
-                .header(Header::new("Access-Control-Max-Age", "3600"))
-            ;
-        }
-    }
-
-    response.finalize()
+async fn preflight<'r>() -> Response<'r> {
+    Response::build().status(Status::NoContent).finalize()
 }
 
 #[rocket::post("/", data = "<query>")]
@@ -112,6 +113,7 @@ async fn main() {
         .manage(Arc::new(SharedContext::new().await))
         .manage(Schema::new(Query, Mutation, EmptySubscription::new()))
         .mount("/", rocket::routes![preflight, playground, graphql])
+        .attach(Cors)
         .serve()
         .await
         .unwrap();
