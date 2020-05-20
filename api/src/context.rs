@@ -17,7 +17,7 @@ struct ErrorSink;
 
 impl bb8_postgres::bb8::ErrorSink<DbError> for ErrorSink {
     fn sink(&self, error: DbError) {
-        log::error!("{:?}", error)
+        log::error!("{:?}", error);
     }
 
     fn boxed_clone(&self) -> Box<dyn bb8_postgres::bb8::ErrorSink<DbError>> {
@@ -35,6 +35,12 @@ impl SharedContext {
             ))
             .await
             .unwrap();
+
+        {
+            let client = pool.dedicated_connection().await.unwrap();
+
+            client.query_one("SELECT 1", &[]).await.unwrap();
+        }
 
         SharedContext { db: pool }
     }
