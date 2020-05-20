@@ -37,4 +37,19 @@ impl Mutation {
         context.remove_account(&password).await?;
         Ok(NoOp::Ok)
     }
+
+    async fn me(
+        context: &Context,
+        email: Option<String>,
+        username: Option<String>,
+        password: Option<PasswordChange>,
+    ) -> FieldResult<User> {
+        Ok(context.update_account(email, username, password).await?)
+    }
+}
+
+#[derive(juniper::GraphQLInputObject)]
+pub struct PasswordChange {
+    pub current: String,
+    pub new: String,
 }
