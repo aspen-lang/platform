@@ -58,7 +58,10 @@ impl Fairing for Cors {
                     "Access-Control-Allow-Origin",
                     origin.to_string(),
                 ));
-                res.adjoin_header(Header::new("Access-Control-Allow-Methods", "POST, GET"));
+                res.adjoin_header(Header::new(
+                    "Access-Control-Allow-Methods",
+                    "POST, GET, OPTIONS",
+                ));
                 res.adjoin_header(Header::new("Access-Control-Allow-Credentials", "true"));
                 res.adjoin_header(Header::new("Access-Control-Max-Age", "3600"));
             }
