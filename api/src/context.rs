@@ -2,6 +2,7 @@ use crate::user::User;
 use bb8_postgres::bb8::Pool;
 
 use bb8_postgres::PostgresConnectionManager;
+use tokio_postgres::Error as DbError;
 
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -11,9 +12,23 @@ pub struct SharedContext {
     pub db: Pool<PostgresConnectionManager<NoTls>>,
 }
 
+#[derive(Debug)]
+struct ErrorSink;
+
+impl bb8_postgres::bb8::ErrorSink<DbError> for ErrorSink {
+    fn sink(&self, error: DbError) {
+        log::error!("{:?}", error)
+    }
+
+    fn boxed_clone(&self) -> Box<dyn bb8_postgres::bb8::ErrorSink<DbError>> {
+        Box::new(ErrorSink)
+    }
+}
+
 impl SharedContext {
     pub async fn new() -> SharedContext {
         let pool = Pool::builder()
+            .error_sink(Box::new(ErrorSink))
             .build(PostgresConnectionManager::new(
                 std::env::var("POSTGRES_URL").unwrap().parse().unwrap(),
                 NoTls,
