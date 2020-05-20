@@ -32,4 +32,9 @@ impl Mutation {
     ) -> FieldResult<User> {
         Ok(context.sign_in(&username_or_email, &password).await?)
     }
+
+    async fn remove_account(context: &Context, password: String) -> FieldResult<NoOp> {
+        context.remove_account(&password).await?;
+        Ok(NoOp::Ok)
+    }
 }

@@ -87,6 +87,52 @@ impl SharedContext {
             email,
         })
     }
+
+    pub async fn remove_account(
+        &self,
+        id: Uuid,
+        password: &str,
+    ) -> Result<(), RemoveAccountError> {
+        let password = hash_password(password);
+
+        let conn = self.db.get().await.unwrap();
+
+        let row = conn
+            .query_one(
+                "SELECT remove_account($1, $2)",
+                &[&id, &password],
+            )
+            .await?;
+
+        let succeeded = row.get::<usize, Option<bool>>(0).unwrap_or(false);
+
+        if succeeded {
+            Ok(())
+        } else {
+            Err(RemoveAccountError::Failed)
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum RemoveAccountError {
+    Failed,
+    NotSignedIn,
+}
+
+impl fmt::Display for RemoveAccountError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RemoveAccountError::Failed => write!(f, "Account removal failed"),
+            RemoveAccountError::NotSignedIn => write!(f, "You must be signed in to remove your account"),
+        }
+    }
+}
+
+impl From<tokio_postgres::Error> for RemoveAccountError {
+    fn from(_e: tokio_postgres::Error) -> Self {
+        RemoveAccountError::Failed
+    }
 }
 
 #[derive(Debug)]
@@ -200,5 +246,15 @@ impl Context {
 
     pub async fn sign_out(&self) {
         self.record_did_sign_out().await;
+    }
+
+    pub async fn remove_account(&self, password: &str) -> Result<(), RemoveAccountError> {
+        let user = self.user.lock().await;
+        match user.as_ref() {
+            None => Err(RemoveAccountError::NotSignedIn),
+            Some(user) => {
+                self.shared.remove_account(user.id, password).await
+            }
+        }
     }
 }
