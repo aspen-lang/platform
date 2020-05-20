@@ -1,9 +1,9 @@
-name: Push to Master
+name: Push to Develop
 
 on:
   push:
     branches:
-      - master
+      - develop
 
 jobs:
   build:
@@ -26,8 +26,8 @@ jobs:
         uses: allenevans/set-env@v1.0.0
         with:
           API_TAG: ${{ hashFiles('api/**') }}
-          API_SERVICE_NAME: aspen-api
-          CACHE_TAG: latest
+          API_SERVICE_NAME: aspen-api-staging
+          CACHE_TAG: staging
 
       - name: Build and Deploy
         run: make pull push

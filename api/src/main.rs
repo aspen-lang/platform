@@ -1,5 +1,7 @@
 #![feature(decl_macro, proc_macro_hygiene, arbitrary_self_types)]
 
+#[macro_use] extern crate async_trait;
+
 mod user;
 use self::user::*;
 
@@ -17,13 +19,12 @@ mod auth;
 use juniper::EmptySubscription;
 use juniper_rocket_async as juniper_rocket;
 
-use rocket::{
-    http::{Cookie, Cookies},
-    response::content,
-    State,
-};
+use rocket::{http::{Cookie, Cookies, Header}, response::content, State, Request, Response};
 use std::sync::Arc;
 use uuid::Uuid;
+use rocket::request::FromRequest;
+use rocket::request::Outcome;
+use rocket::http::Status;
 
 type Schema = juniper::RootNode<'static, Query, Mutation, EmptySubscription<Context>>;
 
@@ -33,6 +34,41 @@ fn playground() -> content::Html<String> {
 }
 
 const AUTH_COOKIE: &str = "ASPEN_AUTH";
+
+struct Origin(pub String);
+
+#[async_trait]
+impl<'a, 'r> FromRequest<'a, 'r> for Origin {
+    type Error = ();
+
+    async fn from_request(request: &'a Request<'r>) -> Outcome<Self, Self::Error> {
+        match request.headers().get_one("Origin") {
+            None => Outcome::Forward(()),
+            Some(origin) => Outcome::Success(Origin(origin.into())),
+        }
+    }
+}
+
+#[rocket::options("/")]
+async fn preflight<'r>(origin: Option<Origin>) -> Response<'r> {
+    let mut response = Response::build();
+
+    response.status(Status::NoContent);
+
+    match origin {
+        None => {}
+        Some(Origin(origin)) => {
+            response
+                .header(Header::new("Access-Control-Allow-Origin", origin))
+                .header(Header::new("Access-Control-Allow-Methods", "POST, GET"))
+                .header(Header::new("Access-Control-Allow-Credentials", "true"))
+                .header(Header::new("Access-Control-Max-Age", "3600"))
+            ;
+        }
+    }
+
+    response.finalize()
+}
 
 #[rocket::post("/", data = "<query>")]
 async fn graphql(
@@ -75,7 +111,7 @@ async fn main() {
     rocket::ignite()
         .manage(Arc::new(SharedContext::new().await))
         .manage(Schema::new(Query, Mutation, EmptySubscription::new()))
-        .mount("/", rocket::routes![playground, graphql])
+        .mount("/", rocket::routes![preflight, playground, graphql])
         .serve()
         .await
         .unwrap();
