@@ -54,17 +54,17 @@ impl Fairing for Cors {
         match req.headers().get_one("Origin") {
             None => {}
             Some(origin) => {
-                res.adjoin_header(Header::new(
+                res.set_header(Header::new(
                     "Access-Control-Allow-Origin",
                     origin.to_string(),
                 ));
-                res.adjoin_header(Header::new(
+                res.set_header(Header::new(
                     "Access-Control-Allow-Methods",
                     "POST, GET, OPTIONS",
                 ));
-                res.adjoin_header(Header::new("Access-Control-Allow-Credentials", "true"));
-                res.adjoin_header(Header::new("Access-Control-Allow-Headers", "Content-Type"));
-                res.adjoin_header(Header::new("Access-Control-Max-Age", "3600"));
+                res.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+                res.set_header(Header::new("Access-Control-Allow-Headers", "Content-Type"));
+                res.set_header(Header::new("Access-Control-Max-Age", "3600"));
             }
         }
     }
